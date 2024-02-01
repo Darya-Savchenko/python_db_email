@@ -1,16 +1,37 @@
-# This is a sample Python script.
+import pymysql
+from config import host, user, password, db_name
+from datetime import datetime, timedelta
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+try:
+    connection = pymysql.connect(
+        host=host,
+        port=3306,
+        user=user,
+        password=password,
+        database=db_name,
+        cursorclass=pymysql.cursors.DictCursor
+    )
+    print("Successfully connected")
 
+    try:
+        with connection.cursor() as cursor:
+            select_all_dialogs_query = "SELECT * FROM x27_social_dialogs WHERE id_user_from = 12345 OR id_user_to = 12345;"
+            cursor.execute(select_all_dialogs_query)
+            rows = cursor.fetchall()
+            for row in rows:
+                print(row)
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+        with connection.cursor() as cursor:
+            new_messages_last_week_query = "SELECT * FROM x27_social_dialogs WHERE (id_user_from = 12345 OR id_user_to = 12345) AND date_created >= %s AND has_new_msg = 1;"
+            one_week_ago = datetime.now() - timedelta(weeks=1)
+            cursor.execute(new_messages_last_week_query, (one_week_ago,))
+            rows = cursor.fetchall()
+            for row in rows:
+                print(row)
 
+    finally:
+        connection.close()
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+except Exception as ex:
+    print("Connection refused...")
+    print(ex)
